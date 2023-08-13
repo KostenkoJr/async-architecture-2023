@@ -34,6 +34,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization();
 
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
+builder.Services.Configure<KafkaSettings>(builder.Configuration.GetSection("Kafka"));
 
 var app = builder.Build();
 

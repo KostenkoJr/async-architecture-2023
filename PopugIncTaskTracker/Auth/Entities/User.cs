@@ -12,5 +12,7 @@ public class User
 public enum Role
 {
     Admin = 1,
-    Worker = 2
+    Worker = 2,
+    Manager = 3,
+    Accountant = 4
 }
