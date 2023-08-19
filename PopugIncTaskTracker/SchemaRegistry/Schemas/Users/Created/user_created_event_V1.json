@@ -1,0 +1,75 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "UserCreatedEvent",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "PublicId": {
+      "type": "string",
+      "format": "guid"
+    },
+    "Name": {
+      "type": "string"
+    },
+    "Role": {
+      "$ref": "#/definitions/Role"
+    },
+    "Email": {
+      "type": "string"
+    },
+    "EventMeta": {
+      "$ref": "#/definitions/EventMetaOfUserCreatedEventVersion"
+    }
+  },
+  "definitions": {
+    "Role": {
+      "type": "integer",
+      "description": "",
+      "x-enumNames": [
+        "Admin",
+        "Worker",
+        "Manager",
+        "Accountant"
+      ],
+      "enum": [
+        1,
+        2,
+        3,
+        4
+      ]
+    },
+    "EventMetaOfUserCreatedEventVersion": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Id": {
+          "type": "string",
+          "format": "guid"
+        },
+        "Version": {
+          "$ref": "#/definitions/UserCreatedEventVersion"
+        },
+        "Name": {
+          "type": "string"
+        },
+        "Time": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "Producer": {
+          "type": "string"
+        }
+      }
+    },
+    "UserCreatedEventVersion": {
+      "type": "integer",
+      "description": "",
+      "x-enumNames": [
+        "V1"
+      ],
+      "enum": [
+        1
+      ]
+    }
+  }
+}

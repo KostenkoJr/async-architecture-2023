@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "TaskCompletedEvent",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "PublicId": {
+      "type": "string",
+      "format": "guid"
+    },
+    "PublicAssigneeId": {
+      "type": "string",
+      "format": "guid"
+    },
+    "EventMeta": {
+      "$ref": "#/definitions/EventMetaOfTaskCompletedEventVersion"
+    }
+  },
+  "definitions": {
+    "EventMetaOfTaskCompletedEventVersion": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Id": {
+          "type": "string",
+          "format": "guid"
+        },
+        "Version": {
+          "$ref": "#/definitions/TaskCompletedEventVersion"
+        },
+        "Name": {
+          "type": "string"
+        },
+        "Time": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "Producer": {
+          "type": "string"
+        }
+      }
+    },
+    "TaskCompletedEventVersion": {
+      "type": "integer",
+      "description": "",
+      "x-enumNames": [
+        "V1"
+      ],
+      "enum": [
+        1
+      ]
+    }
+  }
+}

@@ -2,6 +2,7 @@ using System.Text;
 using Auth.Api.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using SchemaRegistry;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,6 +36,8 @@ builder.Services.AddAuthorization();
 
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
 builder.Services.Configure<KafkaSettings>(builder.Configuration.GetSection("Kafka"));
+
+builder.Services.AddSchemaRegistryLibrary();
 
 var app = builder.Build();
 

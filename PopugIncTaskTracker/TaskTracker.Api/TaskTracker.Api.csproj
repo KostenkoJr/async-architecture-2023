@@ -23,6 +23,7 @@
 
 
     <ItemGroup>
+      <ProjectReference Include="..\SchemaRegistry\SchemaRegistry.csproj" />
       <ProjectReference Include="..\TaskTracker\TaskTracker.Data\TaskTracker.Data.csproj" />
     </ItemGroup>
 

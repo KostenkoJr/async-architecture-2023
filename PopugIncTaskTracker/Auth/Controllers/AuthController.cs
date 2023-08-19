@@ -11,6 +11,8 @@ using Confluent.Kafka;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using NJsonSchema;
+using SchemaRegistry.Schemas.Users.Created;
 
 namespace Auth.Api.Controllers;
 
@@ -18,11 +20,13 @@ namespace Auth.Api.Controllers;
 [Route("[controller]")]
 public class AuthController : ControllerBase
 {
+    private readonly IUserCreatedEventSchemaRegistry _schemaRegistry;
     private readonly JwtSettings _jwtSettings;
     private readonly KafkaSettings _kafkaSettings;
 
-    public AuthController(IOptions<JwtSettings> jwtSettings, IOptions<KafkaSettings> kafkaSettings)
+    public AuthController(IOptions<JwtSettings> jwtSettings, IOptions<KafkaSettings> kafkaSettings, IUserCreatedEventSchemaRegistry schemaRegistry)
     {
+        _schemaRegistry = schemaRegistry;
         _kafkaSettings = kafkaSettings.Value;
         _jwtSettings = jwtSettings.Value;
     }
@@ -103,10 +107,31 @@ public class AuthController : ControllerBase
     {
         var producerConfig = new ProducerConfig { BootstrapServers = _kafkaSettings.BootstrapServers };
         var producer = new ProducerBuilder<string, string>(producerConfig).Build();
+
+        var data = JsonSerializer.Serialize(new UserCreatedEvent(user.PublicId, user.Name, user.Role, user.Email)
+        {
+            EventMeta = new EventMeta<UserCreatedEventVersion>
+            {
+                Id = Guid.NewGuid(),
+                Producer = "Auth",
+                Name = "UserCreatedEvent",
+                Time = DateTime.UtcNow,
+                Version = UserCreatedEventVersion.V1
+            }
+        });
+
+        var jsonSchema = _schemaRegistry.GetSchemaByVersion(UserCreatedEventVersion.V1.ToString()).Result;
+        var validationErrors = JsonSchema.FromJsonAsync(jsonSchema).Result.Validate(data);
+
+        if (validationErrors.Any())
+        {
+            throw new InvalidOperationException("Invalid format of event");
+        }
+        
         producer.Produce("users-stream", new Message<string, string>
         {
             Key = user.Id.ToString(), 
-            Value = JsonSerializer.Serialize(new UserCreatedEventData(user.PublicId, user.Name, user.Role, user.Email))
+            Value = data
         });
     }
 }
