@@ -4,8 +4,8 @@ using System.Text;
 using System.Text.Json;
 using Auth.Api.Data;
 using Auth.Api.Dto;
+using Auth.Api.Entities;
 using Auth.Api.Events;
-using Auth.Api.Models;
 using Auth.Api.Settings;
 using Confluent.Kafka;
 using Microsoft.AspNetCore.Mvc;
@@ -41,6 +41,7 @@ public class AuthController : ControllerBase
         var user = new User
         {
             Name = userRegister.Name,
+            PublicId = Guid.NewGuid(),
             Email = userRegister.Email,
             Password = userRegister.Password,
             Role = userRegister.Role
@@ -105,7 +106,7 @@ public class AuthController : ControllerBase
         producer.Produce("users-stream", new Message<string, string>
         {
             Key = user.Id.ToString(), 
-            Value = JsonSerializer.Serialize(new UserCreatedEventData(user.Id, user.Name, user.Role, user.Email))
+            Value = JsonSerializer.Serialize(new UserCreatedEventData(user.PublicId, user.Name, user.Role, user.Email))
         });
     }
 }

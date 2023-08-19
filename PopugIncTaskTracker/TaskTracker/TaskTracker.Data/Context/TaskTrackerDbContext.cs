@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using TaskTracker.Data.Models;
-using Task = TaskTracker.Data.Models.Task;
+using TaskTracker.Data.Entities;
+using Task = TaskTracker.Data.Entities.Task;
 
 namespace TaskTracker.Data.Context;
 

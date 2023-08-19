@@ -1,5 +1,5 @@
-using TaskTracker.Data.Models;
+using TaskTracker.Data.Entities;
 
 namespace TaskTracker.Consumer.Events;
 
-public record UserCreatedEvent(Guid Id, string Name, Role Role, string Email);
+public record UserCreatedEvent(Guid PublicId, string Name, Role Role, string Email);

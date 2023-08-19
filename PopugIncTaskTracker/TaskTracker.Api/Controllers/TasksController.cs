@@ -4,11 +4,12 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using TaskTracker.Data.Context;
-using TaskTracker.Data.Models;
+using TaskTracker.Data.Entities;
 using TaskTracker.Dto;
 using TaskTracker.Events.Domain;
 using TaskTracker.Events.Stream;
 using TaskTracker.Settings;
+using Task = TaskTracker.Data.Entities.Task;
 
 namespace TaskTracker.Controllers;
 
@@ -25,7 +26,7 @@ public class TasksController : ControllerBase
 
     [Authorize]
     [HttpGet("all-tasks")]
-    public ActionResult<IReadOnlyCollection<Data.Models.Task>> ListAllTasks()
+    public ActionResult<IReadOnlyCollection<Task>> ListAllTasks()
     {
         var userRole = User.Claims.FirstOrDefault(x => x.Type == "Role");
         var canViewAllTasks = userRole?.Value == "Admin";
@@ -41,7 +42,7 @@ public class TasksController : ControllerBase
     
     [Authorize]
     [HttpGet("assigned-to-me-tasks")]
-    public ActionResult<IReadOnlyCollection<Data.Models.Task>> ListAssignedToMeTasks()
+    public ActionResult<IReadOnlyCollection<Task>> ListAssignedToMeTasks()
     {
         var currentUserId = Guid.Parse(User.Claims.First(x => x.Type == "Id").Value);
         
@@ -51,13 +52,14 @@ public class TasksController : ControllerBase
     
     [Authorize]
     [HttpPost("tasks")]
-    public ActionResult<Data.Models.Task> CreateTask(CreateTaskDto inputTask)
+    public ActionResult<Task> CreateTask(CreateTaskDto inputTask)
     {
         var currentUserId = Guid.Parse(User.Claims.First(x => x.Type == "Id").Value);
         using var db = new TaskTrackerDbContext();
         
-        var task = new Data.Models.Task
+        var task = new Task
         {
+            PublicId = Guid.NewGuid(),
             Title = inputTask.Title,
             Description = inputTask.Description,
             Cost = Random.Shared.Next(10, 21),
@@ -76,7 +78,7 @@ public class TasksController : ControllerBase
     
     [Authorize]
     [HttpPost("complete-task")]
-    public ActionResult<Data.Models.Task> CompleteTask(Guid taskId)
+    public ActionResult<Task> CompleteTask(Guid taskId)
     {
         var currentUserId = Guid.Parse(User.Claims.First(x => x.Type == "Id").Value);
         using var db = new TaskTrackerDbContext();
@@ -138,23 +140,23 @@ public class TasksController : ControllerBase
         return Ok();
     }
     
-    private void ProduceTaskCreatedEvent(Data.Models.Task task)
+    private void ProduceTaskCreatedEvent(Task task)
     {
         var producerConfig = new ProducerConfig { BootstrapServers = _kafkaSettings.BootstrapServers };
         var producer = new ProducerBuilder<string, string>(producerConfig).Build();
+        
         producer.Produce("tasks-stream", new Message<string, string>
         {
             Key = task.Id.ToString(), 
             Value = JsonSerializer.Serialize(new TaskCreatedEventData
             {
-                Id = task.Id,
+                PublicId = task.PublicId,
                 Title = task.Title,
                 Description = task.Description,
                 Cost = task.Cost,
                 Award = task.Award,
-                Status = task.Status,
-                AuthorId = task.AuthorId,
-                AssigneeId = task.AssigneeId
+                PublicAuthorId = task.PublicAuthorId,
+                PublicAssigneeId = task.PublicAssigneeId
             })
         });
         
@@ -163,19 +165,18 @@ public class TasksController : ControllerBase
             Key = task.Id.ToString(), 
             Value = JsonSerializer.Serialize(new TaskCreatedEventData
             {
-                Id = task.Id,
+                PublicId = task.PublicId,
                 Title = task.Title,
                 Description = task.Description,
                 Cost = task.Cost,
                 Award = task.Award,
-                Status = task.Status,
-                AuthorId = task.AuthorId,
-                AssigneeId = task.AssigneeId
+                PublicAuthorId = task.PublicAuthorId,
+                PublicAssigneeId = task.PublicAssigneeId
             })
         });
     }
     
-    private void ProduceTaskAssignEvent(Data.Models.Task task)
+    private void ProduceTaskAssignEvent(Task task)
     {
         var producerConfig = new ProducerConfig { BootstrapServers = _kafkaSettings.BootstrapServers };
         var producer = new ProducerBuilder<string, string>(producerConfig).Build();
@@ -185,36 +186,24 @@ public class TasksController : ControllerBase
             Key = task.Id.ToString(), 
             Value = JsonSerializer.Serialize(new TaskAssignedEventData
             {
-                Id = task.Id,
-                Title = task.Title,
-                Description = task.Description,
-                Cost = task.Cost,
-                Award = task.Award,
-                Status = task.Status,
-                AuthorId = task.AuthorId,
-                AssigneeId = task.AssigneeId
+                PublicId = task.PublicId,
+                PublicAssigneeId = task.PublicAssigneeId
             })
         });
     }
     
-    private void ProduceTaskCompletedEvent(Data.Models.Task task)
+    private void ProduceTaskCompletedEvent(Task task)
     {
         var producerConfig = new ProducerConfig { BootstrapServers = _kafkaSettings.BootstrapServers };
         var producer = new ProducerBuilder<string, string>(producerConfig).Build();
         
-        producer.Produce("tasks", new Message<string, string>
+        producer.Produce("tasks-lifecycle", new Message<string, string>
         {
             Key = task.Id.ToString(), 
             Value = JsonSerializer.Serialize(new TaskCompletedEventData
             {
-                Id = task.Id,
-                Title = task.Title,
-                Description = task.Description,
-                Cost = task.Cost,
-                Award = task.Award,
-                Status = task.Status,
-                AuthorId = task.AuthorId,
-                AssigneeId = task.AssigneeId
+                PublicId = task.PublicId,
+                PublicAssigneeId = task.PublicAssigneeId
             })
         });
     }

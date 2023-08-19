@@ -1,4 +1,4 @@
-using Auth.Api.Models;
+using Auth.Api.Entities;
 
 namespace Auth.Api.Dto;
 

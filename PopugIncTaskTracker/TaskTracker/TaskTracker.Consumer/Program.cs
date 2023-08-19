@@ -2,7 +2,7 @@
 using Confluent.Kafka;
 using TaskTracker.Consumer.Events;
 using TaskTracker.Data.Context;
-using TaskTracker.Data.Models;
+using TaskTracker.Data.Entities;
 
 var config = new ConsumerConfig
 {
@@ -28,7 +28,8 @@ while (true)
     
     db.Users.Add(new User
     {
-        Id = user.Id,
+        Id = Guid.NewGuid(),
+        PublicId = user.PublicId,
         Name = user.Name,
         Email = user.Email,
         Role = user.Role
