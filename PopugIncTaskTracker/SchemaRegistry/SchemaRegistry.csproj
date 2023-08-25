@@ -25,7 +25,28 @@
       <None Update="Schemas\Tasks\Completed\task_completed_event_V1.json">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
+      <None Update="Schemas\Users\Created\user_created_event_V1.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="Schemas\Tasks\Assigned\task_assigned_event_V1.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="Schemas\Tasks\Created\task_created_event_V1.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+
+
+
+
+
+
+
+
     </ItemGroup>
+
+
+
+
 
 
 

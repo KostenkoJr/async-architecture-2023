@@ -191,7 +191,7 @@ public class TasksController : ControllerBase
             Value = data
         });
         
-        producer.Produce("tasks", new Message<string, string>
+        producer.Produce("tasks-lifecycle", new Message<string, string>
         {
             Key = task.Id.ToString(), 
             Value = data
@@ -224,7 +224,7 @@ public class TasksController : ControllerBase
             throw new InvalidOperationException("Invalid format of event");
         }
         
-        producer.Produce("tasks", new Message<string, string>
+        producer.Produce("tasks-lifecycle", new Message<string, string>
         {
             Key = task.Id.ToString(), 
             Value = data

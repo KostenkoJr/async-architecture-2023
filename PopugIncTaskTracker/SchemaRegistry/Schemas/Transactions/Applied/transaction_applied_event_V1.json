@@ -1,0 +1,71 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "TransactionAppliedEvent",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "PublicId": {
+      "type": "string",
+      "format": "guid"
+    },
+    "TransactionType": {
+      "$ref": "#/definitions/TransactionType"
+    },
+    "Credit": {
+      "type": "number",
+      "format": "double"
+    },
+    "Debit": {
+      "type": "number",
+      "format": "double"
+    },
+    "EventMeta": {
+      "$ref": "#/definitions/EventMetaOfTransactionAppliedEventVersion"
+    }
+  },
+  "definitions": {
+    "TransactionType": {
+      "type": "integer",
+      "description": "",
+      "x-enumNames": [
+        "Payment"
+      ],
+      "enum": [
+        1
+      ]
+    },
+    "EventMetaOfTransactionAppliedEventVersion": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Id": {
+          "type": "string",
+          "format": "guid"
+        },
+        "Version": {
+          "$ref": "#/definitions/TransactionAppliedEventVersion"
+        },
+        "Name": {
+          "type": "string"
+        },
+        "Time": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "Producer": {
+          "type": "string"
+        }
+      }
+    },
+    "TransactionAppliedEventVersion": {
+      "type": "integer",
+      "description": "",
+      "x-enumNames": [
+        "V1"
+      ],
+      "enum": [
+        1
+      ]
+    }
+  }
+}
