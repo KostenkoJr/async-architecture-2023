@@ -1,0 +1,72 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "TaskCreatedEvent",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "PublicId": {
+      "type": "string",
+      "format": "guid"
+    },
+    "Title": {
+      "type": "string"
+    },
+    "Description": {
+      "type": "string"
+    },
+    "Cost": {
+      "type": "number",
+      "format": "double"
+    },
+    "Award": {
+      "type": "number",
+      "format": "double"
+    },
+    "PublicAuthorId": {
+      "type": "string",
+      "format": "guid"
+    },
+    "PublicAssigneeId": {
+      "type": "string",
+      "format": "guid"
+    },
+    "EventMeta": {
+      "$ref": "#/definitions/EventMetaOfTaskCreatedEventVersion"
+    }
+  },
+  "definitions": {
+    "EventMetaOfTaskCreatedEventVersion": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Id": {
+          "type": "string",
+          "format": "guid"
+        },
+        "Version": {
+          "$ref": "#/definitions/TaskCreatedEventVersion"
+        },
+        "Name": {
+          "type": "string"
+        },
+        "Time": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "Producer": {
+          "type": "string"
+        }
+      }
+    },
+    "TaskCreatedEventVersion": {
+      "type": "integer",
+      "description": "",
+      "x-enumNames": [
+        "V1"
+      ],
+      "enum": [
+        1
+      ]
+    }
+  }
+}

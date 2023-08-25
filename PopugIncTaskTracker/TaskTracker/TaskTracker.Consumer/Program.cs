@@ -7,7 +7,7 @@ using TaskTracker.Data.Entities;
 var config = new ConsumerConfig
 {
     BootstrapServers = "localhost:9092",
-    GroupId = "foo",
+    GroupId = "foot",
     AutoOffsetReset = AutoOffsetReset.Earliest
 };
 

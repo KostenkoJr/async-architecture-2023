@@ -1,8 +1,7 @@
 using System.Text;
-using Auth.Api.Settings;
+using Accounting.Api.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using SchemaRegistry;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +11,8 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.Configure<KafkaSettings>(builder.Configuration.GetSection("Kafka"));
 
 builder.Services.AddAuthentication(options =>
 {
@@ -31,13 +32,6 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true
     };
 });
-
-builder.Services.AddAuthorization();
-
-builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
-builder.Services.Configure<KafkaSettings>(builder.Configuration.GetSection("Kafka"));
-
-builder.Services.AddSchemaRegistryLibrary();
 
 var app = builder.Build();
 

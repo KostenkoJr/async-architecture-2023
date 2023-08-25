@@ -1,8 +1,7 @@
 namespace TaskTracker.Events.Stream;
 
-public record TaskCreatedEventData
+public record TaskCreatedEvent
 {
-    public string Event => EventType.TaskCreated.ToString();
     public Guid PublicId { get; set; }
     public string Title { get; set; }
     public string Description { get; set; }
@@ -10,4 +9,10 @@ public record TaskCreatedEventData
     public double Award { get; set; }
     public Guid PublicAuthorId { get; set; }
     public Guid PublicAssigneeId { get; set; }
+    public EventMeta<TaskCreatedEventVersion> EventMeta { get; init; }
 };
+
+public enum TaskCreatedEventVersion
+{
+    V1 = 1,
+}

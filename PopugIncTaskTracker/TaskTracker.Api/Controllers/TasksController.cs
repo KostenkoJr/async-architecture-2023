@@ -3,9 +3,14 @@ using Confluent.Kafka;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using NJsonSchema;
+using SchemaRegistry.Schemas.Tasks.Assigned;
+using SchemaRegistry.Schemas.Tasks.Completed;
+using SchemaRegistry.Schemas.Tasks.Created;
 using TaskTracker.Data.Context;
 using TaskTracker.Data.Entities;
 using TaskTracker.Dto;
+using TaskTracker.Events;
 using TaskTracker.Events.Domain;
 using TaskTracker.Events.Stream;
 using TaskTracker.Settings;
@@ -17,10 +22,19 @@ namespace TaskTracker.Controllers;
 [Route("[controller]")]
 public class TasksController : ControllerBase
 {
+    private readonly ITaskCompletedEventSchemaRegistry _taskCompletedSchemaRegistry;
+    private readonly ITaskAssignedEventSchemaRegistry _taskAssignedEventSchemaRegistry;
+    private readonly ITaskCreatedEventSchemaRegistry _taskCreatedEventSchemaRegistry;
     private readonly KafkaSettings _kafkaSettings;
 
-    public TasksController(IOptions<KafkaSettings> kafkaSettings)
+    public TasksController(IOptions<KafkaSettings> kafkaSettings, 
+        ITaskCompletedEventSchemaRegistry taskCompletedSchemaRegistry,
+        ITaskAssignedEventSchemaRegistry taskAssignedEventSchemaRegistry,
+        ITaskCreatedEventSchemaRegistry taskCreatedEventSchemaRegistry)
     {
+        _taskCompletedSchemaRegistry = taskCompletedSchemaRegistry;
+        _taskAssignedEventSchemaRegistry = taskAssignedEventSchemaRegistry;
+        _taskCreatedEventSchemaRegistry = taskCreatedEventSchemaRegistry;
         _kafkaSettings = kafkaSettings.Value;
     }
 
@@ -144,35 +158,43 @@ public class TasksController : ControllerBase
     {
         var producerConfig = new ProducerConfig { BootstrapServers = _kafkaSettings.BootstrapServers };
         var producer = new ProducerBuilder<string, string>(producerConfig).Build();
+
+        var data = JsonSerializer.Serialize(new TaskCreatedEvent
+        {
+            PublicId = task.PublicId,
+            Title = task.Title,
+            Description = task.Description,
+            Cost = task.Cost,
+            Award = task.Award,
+            PublicAuthorId = task.PublicAuthorId,
+            PublicAssigneeId = task.PublicAssigneeId,
+            EventMeta = new EventMeta<TaskCreatedEventVersion>
+            {
+                Id = Guid.NewGuid(),
+                Version = TaskCreatedEventVersion.V1,
+                Name = "TaskCreatedEvent",
+                Time = DateTime.Now,
+                Producer = "TaskTracker"
+            }
+        });
+        
+        var jsonSchema = _taskAssignedEventSchemaRegistry.GetSchemaByVersion(TaskCreatedEventVersion.V1.ToString()).Result;
+        var validationErrors = JsonSchema.FromJsonAsync(jsonSchema).Result.Validate(data);
+        if (validationErrors.Any())
+        {
+            throw new InvalidOperationException("Invalid format of event");
+        }
         
         producer.Produce("tasks-stream", new Message<string, string>
         {
             Key = task.Id.ToString(), 
-            Value = JsonSerializer.Serialize(new TaskCreatedEventData
-            {
-                PublicId = task.PublicId,
-                Title = task.Title,
-                Description = task.Description,
-                Cost = task.Cost,
-                Award = task.Award,
-                PublicAuthorId = task.PublicAuthorId,
-                PublicAssigneeId = task.PublicAssigneeId
-            })
+            Value = data
         });
         
-        producer.Produce("tasks", new Message<string, string>
+        producer.Produce("tasks-lifecycle", new Message<string, string>
         {
             Key = task.Id.ToString(), 
-            Value = JsonSerializer.Serialize(new TaskCreatedEventData
-            {
-                PublicId = task.PublicId,
-                Title = task.Title,
-                Description = task.Description,
-                Cost = task.Cost,
-                Award = task.Award,
-                PublicAuthorId = task.PublicAuthorId,
-                PublicAssigneeId = task.PublicAssigneeId
-            })
+            Value = data
         });
     }
     
@@ -180,15 +202,32 @@ public class TasksController : ControllerBase
     {
         var producerConfig = new ProducerConfig { BootstrapServers = _kafkaSettings.BootstrapServers };
         var producer = new ProducerBuilder<string, string>(producerConfig).Build();
+
+        var data = JsonSerializer.Serialize(new TaskAssignedEvent
+        {
+            PublicId = task.PublicId,
+            PublicAssigneeId = task.PublicAssigneeId,
+            EventMeta = new EventMeta<TaskAssignedEventVersion>()
+            {
+                Id = Guid.NewGuid(),
+                Name = "TaskAssignedEvent",
+                Time = DateTime.UtcNow,
+                Producer = "TaskTracker",
+                Version = TaskAssignedEventVersion.V1
+            }
+        });
         
-        producer.Produce("tasks", new Message<string, string>
+        var jsonSchema = _taskAssignedEventSchemaRegistry.GetSchemaByVersion(TaskAssignedEventVersion.V1.ToString()).Result;
+        var validationErrors = JsonSchema.FromJsonAsync(jsonSchema).Result.Validate(data);
+        if (validationErrors.Any())
+        {
+            throw new InvalidOperationException("Invalid format of event");
+        }
+        
+        producer.Produce("tasks-lifecycle", new Message<string, string>
         {
             Key = task.Id.ToString(), 
-            Value = JsonSerializer.Serialize(new TaskAssignedEventData
-            {
-                PublicId = task.PublicId,
-                PublicAssigneeId = task.PublicAssigneeId
-            })
+            Value = data
         });
     }
     
@@ -196,15 +235,32 @@ public class TasksController : ControllerBase
     {
         var producerConfig = new ProducerConfig { BootstrapServers = _kafkaSettings.BootstrapServers };
         var producer = new ProducerBuilder<string, string>(producerConfig).Build();
+
+        var data = JsonSerializer.Serialize(new TaskCompletedEvent
+        {
+            PublicId = task.PublicId,
+            PublicAssigneeId = task.PublicAssigneeId,
+            EventMeta = new EventMeta<TaskCompletedEventVersion>()
+            {
+                Id = Guid.NewGuid(),
+                Name = "TaskCompletedEvent",
+                Time = DateTime.UtcNow,
+                Producer = "TaskTracker",
+                Version = TaskCompletedEventVersion.V1
+            }
+        });
+
+        var jsonSchema = _taskCompletedSchemaRegistry.GetSchemaByVersion(TaskCompletedEventVersion.V1.ToString()).Result;
+        var validationErrors = JsonSchema.FromJsonAsync(jsonSchema).Result.Validate(data);
+        if (validationErrors.Any())
+        {
+            throw new InvalidOperationException("Invalid format of event");
+        }
         
         producer.Produce("tasks-lifecycle", new Message<string, string>
         {
             Key = task.Id.ToString(), 
-            Value = JsonSerializer.Serialize(new TaskCompletedEventData
-            {
-                PublicId = task.PublicId,
-                PublicAssigneeId = task.PublicAssigneeId
-            })
+            Value = data
         });
     }
 }
